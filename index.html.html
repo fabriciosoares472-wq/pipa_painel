@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>PiPA · Painel Pedagógico · 1º Simulado 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --red:#C0272D;--red-d:#8C1A1E;--red-lt:#FFF0F0;--red-mid:#F5CCCC;
+  --green:#1B5E35;--green-lt:#EAF5EE;--green-mid:#C3E8CE;
+  --amber:#7C4A00;--amber-lt:#FFF8EC;
+  --ink:#0E0E12;--ink2:#3A3A4A;--ink3:#7A7A90;--ink4:#AEAEC0;
+  --bg:#F6F5F3;--card:#FFFFFF;--border:#E2E0E8;--border2:#CCCAD8;
+  --r:10px;--sh:0 1px 3px rgba(0,0,0,.06),0 4px 14px rgba(0,0,0,.05);
+}
+html{scroll-behavior:smooth}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--bg);color:var(--ink);font-size:14px;min-height:100vh}
+button,select{font-family:inherit;cursor:pointer}
+a{color:inherit;text-decoration:none}
+
+/* ── Topbar ── */
+#topbar{background:var(--red);height:54px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:200;box-shadow:0 2px 8px rgba(192,39,45,.3)}
+.tb-logo{font-family:'Syne',sans-serif;font-weight:800;font-size:15px;color:#fff;letter-spacing:.02em}
+.tb-center{font-size:13px;font-weight:500;color:rgba(255,255,255,.85)}
+.tb-right{font-family:'IBM Plex Mono',monospace;font-size:11px;color:rgba(255,255,255,.6);background:rgba(255,255,255,.12);padding:4px 12px;border-radius:20px}
+
+/* ── Filters ── */
+#filters{background:var(--card);border-bottom:1.5px solid var(--border);padding:12px 28px;display:flex;gap:20px;align-items:center;flex-wrap:wrap;position:sticky;top:54px;z-index:100;box-shadow:0 2px 6px rgba(0,0,0,.04)}
+.fl{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);margin-right:2px}
+.pills{display:flex;gap:5px;flex-wrap:wrap}
+.pill{font-size:12px;font-weight:500;padding:5px 14px;border-radius:20px;background:var(--bg);border:1.5px solid var(--border2);color:var(--ink2);transition:all .13s;white-space:nowrap}
+.pill:hover{border-color:var(--red);color:var(--red)}
+.pill.on{background:var(--red);border-color:var(--red);color:#fff}
+.sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
+#stat-badge{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);margin-left:auto;background:var(--bg);border:1px solid var(--border);padding:4px 12px;border-radius:20px;white-space:nowrap}
+
+/* ── Layout ── */
+#main{padding:22px 28px 40px;max-width:1440px;margin:0 auto}
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+.sec-hd h2{font-family:'Syne',sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--ink3)}
+.badge-sm{font-family:'IBM Plex Mono',monospace;font-size:10px;background:var(--border);color:var(--ink3);padding:2px 8px;border-radius:10px}
+.mb{margin-bottom:22px}
+
+/* ── KPI row ── */
+.kpi-row{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:transform .12s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi::before{content:'';position:absolute;left:0;top:0;width:3.5px;height:100%}
+.kpi.c-red::before{background:var(--red)}
+.kpi.c-green::before{background:var(--green)}
+.kpi.c-amber::before{background:var(--amber)}
+.kpi.c-ink::before{background:var(--ink)}
+.kpi-lbl{font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:7px}
+.kpi-val{font-family:'Syne',sans-serif;font-size:24px;font-weight:800;line-height:1;margin-bottom:3px}
+.kpi-val.c-red{color:var(--red)} .kpi-val.c-green{color:var(--green)} .kpi-val.c-amber{color:var(--amber)}
+.kpi-sub{font-size:11px;color:var(--ink3)}
+
+/* ── Cards ── */
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--sh)}
+.card-hd{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ink3);margin-bottom:14px;display:flex;align-items:center;justify-content:space-between}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.ch{position:relative;height:210px}
+
+/* ── Questões heatmap ── */
+.q-wrap{display:grid;grid-template-columns:repeat(10,1fr);gap:7px}
+.q-cell{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:9px 5px;text-align:center;cursor:default;transition:transform .12s,box-shadow .12s;box-shadow:var(--sh)}
+.q-cell:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+.q-n{font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--ink3);margin-bottom:4px}
+.q-p{font-family:'IBM Plex Mono',monospace;font-size:12.5px;font-weight:500}
+.q-bar{height:3px;background:var(--border);border-radius:2px;margin-top:5px;overflow:hidden}
+.q-bf{height:100%;border-radius:2px}
+.q-disc{font-size:8.5px;color:var(--ink4);margin-top:3px}
+
+/* ── Disc bars ── */
+.dbars{display:flex;flex-direction:column;gap:9px}
+.dbar-row{display:grid;grid-template-columns:80px 1fr 36px;align-items:center;gap:9px}
+.dbar-lbl{font-size:11.5px;color:var(--ink2);font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dbar-track{background:var(--border);height:8px;border-radius:4px;overflow:hidden}
+.dbar-fill{height:100%;border-radius:4px}
+.dbar-pct{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink3);text-align:right}
+
+/* ── Quadrantes ── */
+.quad-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:2px;background:var(--border);border-radius:var(--r);overflow:hidden;height:280px}
+.quad{padding:11px 13px;background:var(--card);overflow:hidden;display:flex;flex-direction:column}
+.quad-ttl{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px}
+.quad-names{display:flex;flex-wrap:wrap;gap:3px;overflow-y:auto;flex:1}
+.qtag{font-size:10px;padding:2px 7px;border-radius:10px;white-space:nowrap;cursor:pointer;transition:opacity .1s}
+.qtag:hover{opacity:.7}
+
+/* ── Stars ── */
+.star-list{display:flex;flex-direction:column;gap:7px;max-height:280px;overflow-y:auto}
+.star-row{display:flex;align-items:flex-start;gap:9px;padding:8px 11px;border-radius:8px;border-left:3px solid var(--green);background:var(--green-lt)}
+.star-disc{font-size:10px;font-weight:700;color:var(--green);width:66px;flex-shrink:0;padding-top:1px}
+.star-names{font-size:12px;color:var(--ink);line-height:1.5}
+
+/* ── Heatmap ── */
+.hm-wrap{overflow-x:auto}
+.hm-table{border-collapse:collapse;font-size:11.5px;min-width:600px}
+.hm-table th{font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--ink3);padding:6px 8px;text-align:center;font-weight:500;white-space:nowrap;background:var(--bg);position:sticky;top:0;z-index:2}
+.hm-table td{padding:5px 6px;text-align:center;border:1px solid var(--border)}
+.hm-name{text-align:left!important;padding-left:10px!important;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--bg);position:sticky;left:0;z-index:1}
+.hm-cell{border-radius:5px;font-family:'IBM Plex Mono',monospace;font-size:10px;font-weight:500}
+
+/* ── Ranking table ── */
+.rank-scroll{overflow-y:auto;max-height:480px}
+.rank-tbl{width:100%;border-collapse:collapse}
+.rank-tbl thead th{font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink3);padding:8px 10px;border-bottom:2px solid var(--border);background:var(--bg);position:sticky;top:0;z-index:2;font-weight:500;white-space:nowrap}
+.rank-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+.rank-tbl tbody tr:hover{background:#F2F1F6}
+.rank-tbl td{padding:7px 10px;font-size:12.5px;white-space:nowrap}
+.rn{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--ink3)}
+.rname{font-weight:500;max-width:190px;overflow:hidden;text-overflow:ellipsis}
+.rname.hi{color:var(--green);font-weight:700}
+.rtag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9.5px;font-weight:600;padding:2px 8px;border-radius:10px}
+.t-r{background:var(--red-lt);color:var(--red)}
+.t-a{background:var(--amber-lt);color:var(--amber)}
+.t-g{background:var(--green-lt);color:var(--green)}
+.mbar{display:inline-block;width:48px;height:5px;background:var(--border);border-radius:3px;vertical-align:middle;margin-right:5px;overflow:hidden}
+.mbar-f{height:100%;border-radius:3px}
+.disc-val{font-family:'IBM Plex Mono',monospace;font-size:11px;text-align:center}
+
+/* ── Modal perfil ── */
+#modal-bg{display:none;position:fixed;inset:0;background:rgba(14,14,18,.5);z-index:500;backdrop-filter:blur(3px)}
+#modal{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(680px,95vw);max-height:85vh;overflow-y:auto;background:var(--card);border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.25);z-index:501;padding:28px}
+#modal-close{position:absolute;top:16px;right:18px;font-size:22px;color:var(--ink3);cursor:pointer;line-height:1;background:none;border:none}
+.modal-name{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--ink3);margin-bottom:20px}
+.modal-kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+.mk{background:var(--bg);border-radius:8px;padding:12px;text-align:center}
+.mk-l{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink3);margin-bottom:5px}
+.mk-v{font-family:'Syne',sans-serif;font-size:20px;font-weight:800}
+.radar-wrap{height:240px;position:relative;margin-bottom:16px}
+.disc-detail{display:flex;flex-direction:column;gap:7px}
+.dd-row{display:grid;grid-template-columns:90px 1fr 90px;align-items:center;gap:8px}
+.dd-lbl{font-size:12px;font-weight:500}
+.dd-track{background:var(--border);height:8px;border-radius:4px;overflow:hidden}
+.dd-fill{height:100%;border-radius:4px}
+.dd-val{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3);text-align:right}
+
+/* ── Insights ── */
+.insights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.insight{padding:14px 16px;border-radius:var(--r);border-left:4px solid;font-size:12.5px;line-height:1.6}
+.insight.red{background:var(--red-lt);border-color:var(--red);color:var(--red-d)}
+.insight.green{background:var(--green-lt);border-color:var(--green);color:var(--green)}
+.insight.amber{background:var(--amber-lt);border-color:var(--amber);color:var(--amber)}
+.insight strong{display:block;font-weight:700;margin-bottom:3px;font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+
+/* scrollbar */
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="tb-logo">PiPA</span>
+  <span class="tb-center">Painel Pedagógico — 1º Simulado 2026</span>
+  <span class="tb-right">124 alunos · 50 questões · 9 disciplinas</span>
+</div>
+
+<div id="filters">
+  <span class="fl">Turma</span>
+  <div class="pills" id="t-pills"></div>
+  <div class="sep"></div>
+  <span class="fl">Disciplina</span>
+  <div class="pills" id="d-pills"></div>
+  <span id="stat-badge">—</span>
+</div>
+
+<div id="main">
+
+  <!-- KPIs -->
+  <div class="sec-hd mb" style="margin-bottom:10px"><h2>Visão Geral</h2></div>
+  <div class="kpi-row mb" id="kpi-row"></div>
+
+  <!-- Questões -->
+  <div class="sec-hd"><h2>Acerto por Questão</h2><span class="badge-sm" id="q-lbl"></span></div>
+  <div class="q-wrap mb" id="q-wrap"></div>
+
+  <!-- Charts row -->
+  <div class="grid3 mb">
+    <div class="card">
+      <div class="card-hd">Distribuição de Acertos</div>
+      <div class="ch"><canvas id="distChart"></canvas></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Média por Disciplina <span id="disc-filter-label" style="font-weight:400;color:var(--ink3)"></span></div>
+      <div class="dbars" id="dbars"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">Comparativo de Turmas</div>
+      <div class="ch"><canvas id="turmaChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Quadrantes + Stars -->
+  <div class="grid2 mb">
+    <div class="card">
+      <div class="card-hd">Quadrantes de Desempenho
+        <span style="font-size:10px;font-weight:400;color:var(--ink3)">nota × consistência entre disciplinas</span>
+      </div>
+      <div class="quad-grid" id="quad-grid"></div>
+    </div>
+    <div class="card">
+      <div class="card-hd">⭐ Gabaritou a Disciplina</div>
+      <div class="star-list" id="star-list"></div>
+    </div>
+  </div>
+
+  <!-- Heatmap -->
+  <div class="sec-hd"><h2>Mapa de Calor</h2><span class="badge-sm">desempenho por aluno × disciplina</span></div>
+  <div class="card mb">
+    <div class="hm-wrap" style="max-height:380px;overflow-y:auto" id="hm-wrap"></div>
+  </div>
+
+  <!-- Insights -->
+  <div class="sec-hd"><h2>Inteligência Pedagógica</h2></div>
+  <div class="insights-grid mb" id="insights"></div>
+
+  <!-- Ranking -->
+  <div class="sec-hd"><h2>Ranking Individual</h2><span class="badge-sm" id="rank-lbl"></span></div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="rank-scroll">
+      <table class="rank-tbl">
+        <thead>
+          <tr id="rank-head"></tr>
+        </thead>
+        <tbody id="rank-body"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- Modal perfil -->
+<div id="modal-bg" onclick="closeModal()"></div>
+<div id="modal">
+  <button id="modal-close" onclick="closeModal()">×</button>
+  <div class="modal-name" id="m-name"></div>
+  <div class="modal-sub" id="m-sub"></div>
+  <div class="modal-kpis" id="m-kpis"></div>
+  <div class="radar-wrap"><canvas id="radarChart"></canvas></div>
+  <div class="disc-detail" id="m-disc"></div>
+</div>
+
+<script>
+const D = {"students":[{"num":"1261","nome":"Lucas Borges de Jesus","turma":"Turma 3","rank":1,"acertos":41,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":10,"tot":11,"pct":0.9091},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1]},{"num":"1320","nome":"Ester Marcondes de Lima Costa","turma":"Turma 4","rank":1,"acertos":41,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":9,"tot":11,"pct":0.8182},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":7,"tot":7,"pct":1.0},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1]},{"num":"1290","nome":"Maria Ysabell Sodré de Andrade","turma":"Turma 3","rank":3,"acertos":38,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":10,"tot":11,"pct":0.9091},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,1,1,0,0,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,1,0,0,1,1,1,1,0,1,0,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1]},{"num":"1207","nome":"Kauanny Lima Matos","turma":"Turma 1","rank":4,"acertos":37,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":9,"tot":11,"pct":0.8182},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,0,1,1,0,1,0,1,0,1,1,0,1,1,1,1,1,1,1,0,0,0,0,1]},{"num":"1333","nome":"Manuella Silvério dos Santos","turma":"Turma 3","rank":4,"acertos":37,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":6,"tot":7,"pct":0.8571},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,1,1,1,1,0,1,1,1,0,0,0,1,1,1,0,1,1,0,1,0,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,0]},{"num":"1274","nome":"Kizy Thauane Nunes da Silva","turma":"Turma 2","rank":6,"acertos":36,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,1,1,1,0,1,0,1,0,0,1,1,1,0,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,0,0,1]},{"num":"1280","nome":"Laura Martins Alencar","turma":"Turma 3","rank":6,"acertos":36,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,1,1,1,0,1,1,1,1,0,1,0,1,1,1,1,0,0,1,1,1,1,1,1,1,1,1,0,1,0,1,0,0,1,0,0,1,1,0,1,1,1,1,1,1,0,1,1,0,1]},{"num":"1249","nome":"Mirella Borges de Cezar","turma":"Turma 4","rank":8,"acertos":35,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,1,0,1,0,1,1,0,1,1,0,1,0,0,0,1,0]},{"num":"1295","nome":"Gabriel Nobrega de Sá","turma":"Turma 3","rank":9,"acertos":34,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,0,1,0,0,1,1,1,1,1,0,0,1,1,1,0,1,1,1,1,1,1,0,0,1,1,0,1,1,1,0,0,1,1,1,1,1,1,1,0,0,1,1,0,0]},{"num":"1321","nome":"Mirella Vitória Gomes Aguilar","turma":"Turma 4","rank":9,"acertos":34,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,1,0,1,0,1,1,0,0,1,0,1,1,1,0,1,1,1,1,0,1,1,0,1,1,1,1,0,1,0,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,0]},{"num":"1240","nome":"Lívia Sant'Anna Ferreira","turma":"Turma 2","rank":11,"acertos":33,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,1,0,1,0,0,0,1,1,0,1,1,1,1,1,0,0,0,1,0,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,0,1,0,0,1]},{"num":"1226","nome":"Pedro Henrique Rocha Batista","turma":"Turma 1","rank":12,"acertos":32,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":5,"tot":5,"pct":1.0},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,0,0,1,0,0,0,1,1,1,0,1,1,1,0,1,0,0,1,1,0,0,0,1,0,1,1,1,0,0,0,1,1,0,1,1]},{"num":"1256","nome":"Rogerio Pinheiro Zadravec","turma":"Turma 2","rank":12,"acertos":32,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,1,1,1,0,1,0,0,1,0,1,0,1,1,1,1,0,1,0,0,0,1,0,0,0,1,0,0,1,1,1,1,1,1,0,0,1,0,1,1,1,1,1,1,1,1,1,1,1,0]},{"num":"1203","nome":"Ryan Lucas Dias do Nascimento Silva","turma":"Turma 4","rank":14,"acertos":31,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,0,1,0,1,1,0,1,0,0,1,1,1,1,1,0,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,0,0,1,0,0,1,1,0,1,1,0,1,1,1,1,0,0,1,1]},{"num":"1219","nome":"Larissa Arevalo da Silva","turma":"Turma 1","rank":14,"acertos":31,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,1,1,1,0,0,1,0,1,0,1,1,1,1,1,0,0,1,1,0,1,1,0,1,1,1,0,0,1,0,0,0,0,1,0,1,1,1,1,0,1,1,1,1,0,1,0,1,1]},{"num":"1232","nome":"Isabella da Silva Santos","turma":"Turma 1","rank":14,"acertos":31,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,0,1,1,0,0,1,0,0,0,0,1,1,0,1,1,0,0,1,0,1,1,1,0,1,1,1,1,1,0,0,1,0,1,1]},{"num":"1233","nome":"Julia Mamedes Ribeiro","turma":"Turma 1","rank":14,"acertos":31,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":5,"tot":5,"pct":1.0},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,0,1,0,0,1,1,1,0,1,0,0,0,1,1,1,0,1,1,1,1,0,1,1,0,1,1,0,0,0,0,0,0,0]},{"num":"1285","nome":"Matheus Alves Campos","turma":"Turma 4","rank":14,"acertos":31,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,0,1,1,1,0,1,1,1,1,0,1,1,0,1,0,0,0,0,0,0,1,0,1,0,1,1,1,0,1,1,0,0,1,1,1,1,0,1,1,1,1,1,0,1,1,1,0,0,1]},{"num":"1291","nome":"Kauan Santos de Oliveira","turma":"Turma 2","rank":14,"acertos":31,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,1,1,1,0,0,1,0,0,1,1,1,1,1,0,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,0,1,1,1,0,1,0,1,1,1,1,1,1,0,0,1,0,1,0]},{"num":"1304","nome":"Enzo Vieira França","turma":"Turma 3","rank":14,"acertos":31,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,0,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,0,0,0,1,0,0,1,1,0,1,0,1,0,0,1,1,0,1,1,1,1,0,1,1,1,1,1,0,1,0,0,1]},{"num":"1205","nome":"Paulo Novais dos Santos","turma":"Turma 1","rank":21,"acertos":30,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":9,"tot":11,"pct":0.8182},"HIST":{"ac":5,"tot":5,"pct":1.0},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,0,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,0,0,0,0,0,0,1,0,1,1,0,0,1,0,1,0,1,0,0,0,1,1,1]},{"num":"1217","nome":"Murilo Pereira Dias","turma":"Turma 1","rank":21,"acertos":30,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":5,"tot":5,"pct":1.0}},"qs":[0,1,1,0,0,1,1,0,0,1,0,0,1,1,1,1,1,1,0,0,0,1,0,1,0,1,1,1,0,1,0,0,1,1,0,0,0,0,1,1,0,1,1,1,1,1,1,1,1,1]},{"num":"1267","nome":"Julia da Silva Barros","turma":"Turma 2","rank":21,"acertos":30,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,1,1,1,0,1,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,0,1,1,0,0,1,1,0,1,1,0,0,1,0,1,1,0,0,1,0,1,0,0,0,0,1]},{"num":"1303","nome":"Anna Julia Nogueira da Silva","turma":"Turma 3","rank":21,"acertos":30,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1,1,0,1,0,0,0,1,1,0,0,1,1,0,0,1,0,0,0,0,0,1,0,1,1,1,0,1,1,0,0,1]},{"num":"1328","nome":"Marcela Oliveira Levino Tenca","turma":"Turma 4","rank":21,"acertos":30,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,1,1,1,0,1,1,0,1,1,1,1,1,1,0,1,0,1,0,0,0,0,0,1,1,1,0,1,1,0,1,0,0,1,0,0,1,1,0,1,0,1,1,1,1,0,0,0]},{"num":"1224","nome":"Maria Clara de Freitas Nepomuceno","turma":"Turma 4","rank":26,"acertos":29,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":5,"tot":7,"pct":0.7143},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,0,1,0,1,0,0,1,0,0,0,0,1,1,1,0,1,1,0,1,0,1,1,1,0,1,1,0,0,0,0,1,1,1,0,0,1,1,1,1,0,1,1,1,1,0,1,1,0,1]},{"num":"1325","nome":"Guilherme Rodrigues Rocha","turma":"Turma 4","rank":26,"acertos":29,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":5,"tot":5,"pct":1.0},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,0,1,0,0,1,1,1,1,1,0,1,1,1,1,0,0,1,0,1,0,1,1,0,0,1,1,1,0,1,0,0,1,1,0,1,0,1,0,0,0,1,1,1,0,0,1,0,1,1]},{"num":"1227","nome":"Ketelyn de Paiva Teixeira","turma":"Turma 1","rank":28,"acertos":28,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":5,"tot":5,"pct":1.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,1,0,1,1,0,1,0,1,0,0,1,0,1,0,0,1,1,1,0,1,0,0,0,1,1,1,0,1,0,1,0,1,0,1,1,0,0,1,1,1,1,1,1,0,0,0,1,1]},{"num":"1248","nome":"Ana Julia dos Santos Silva","turma":"Turma 2","rank":28,"acertos":28,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,0,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1,1,0,0,0,1,0,0,0,1,1,0,1,1,0,0,0,0,1,0,1,0,0,1,0,1,1,1,0,0,1,1,1,0]},{"num":"1302","nome":"Luiz Carlos da Silva Sousa","turma":"Turma 2","rank":28,"acertos":28,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":5,"tot":5,"pct":1.0},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,0,1,0,0,1,1,1,0,1,0,0,1,1,1,0,0,1,1,0,1,1,0,0,1,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,1,1,0,0,1,0,1,1]},{"num":"1307","nome":"Riquelme Andre da Silva França","turma":"Turma 3","rank":28,"acertos":28,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":6,"tot":7,"pct":0.8571},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,1,1,1,1,1,1,0,1,1,0,0,1,0,0,1,0,0,0,1,0,1,0,1,0,1,0,1,0,0,1,1,1,1,1,1,1,0,0,0,0,1,0,0,1,0,0,1]},{"num":"1336","nome":"Geovanna Borges Albarrassim","turma":"Turma 4","rank":28,"acertos":28,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,1,0,0,1,1,0,0,1,1,1,1,1,0,1,1,1,0,1,0,0,1,1,0,1,0,1,1,0,1,1,1,0,1,0,0,1,1,1,1,0,0,0,1,0,0,1]},{"num":"1228","nome":"Alyce Lopes Silva","turma":"Turma 1","rank":33,"acertos":27,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,1,0,0,0,0,1,0,1,1,1,0,0,1,1,0,1,1,0,1,0,0,0,1,0,1,0,1,0,0,1,0,0,0]},{"num":"1294","nome":"Allana Eduarda Coutinho dos Santos","turma":"Turma 3","rank":33,"acertos":27,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,1,0,0,0,1,0,1,1,1,0,1,0,0,1,0,1,0,0,0,0,1,1,0,1,1,0,1,1,0,0,1,0,0,1,1,1,1,1,0,1,0,0,0,1]},{"num":"1212","nome":"Ana Giullia Rodrigues Roza","turma":"Turma 1","rank":35,"acertos":26,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,1,1,1,1,0,1,0,1,1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,0,1,0,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,0,0,1]},{"num":"1262","nome":"Jonathan Gonçalves da Silva","turma":"Turma 2","rank":35,"acertos":26,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,0,0,0,0,0,1,1,0,1,1,0,1,1,1,1,0,1,1,0,0,1,1,1,1,1,0,0,0,1,1,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0]},{"num":"1263","nome":"Carolina Santos do Carmo","turma":"Turma 2","rank":35,"acertos":26,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,1,1,0,1,1,1,1,1,0,1,1,1,1,1,0,0,1,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,1,0,1,1,1,0,1,0,0,1,0,0]},{"num":"1279","nome":"Pedro Riquelme Lino do Carmo","turma":"Turma 4","rank":35,"acertos":26,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,1,1,1,0,0,0,0,0,0,1,1,1,1,1,1,1,0,0,0,1,1,0,1,1,1,0,0,0,1,0,1,0,0,1,1,0,1,1,0,1,1,1,0,0,0,0,0,1]},{"num":"1296","nome":"Barbara Cristina Lopes Martins","turma":"Turma 3","rank":35,"acertos":26,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1,0,0,0,1,0,0,1,0,1,0,0,1,0,0,0,1,1,0,1,1,0,1,0,0,0,0]},{"num":"1301","nome":"Carlos Eduardo Souza Ribeiro","turma":"Turma 3","rank":35,"acertos":26,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":9,"tot":11,"pct":0.8182},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0,1,1,1,1,0,1,1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,1,0,1,1]},{"num":"1310","nome":"Yasmin Fernandes de Moura","turma":"Turma 3","rank":35,"acertos":26,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,1,0,0,0,1,1,0,1,0,1,1,1,1,1,0,0,0,1,0,0,0,1,0,1,1,1,0,0,1,0,1,0,0,0,1,0,0,1,1,1,0,1,1,0,1,0,1,1]},{"num":"1319","nome":"Brenda Martins dos Santos","turma":"Turma 3","rank":35,"acertos":26,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,0,1,1,1,0,0,0,1,1,1,1,1,0,0,1,0,0,0,0,1,0,1,0,0,0,1,1,1,1,0,0,1,1,0,0,0,1,1,0,1,1,0,1,0,1,0]},{"num":"1258","nome":"Lizzie Cristina do Nascimento Silva","turma":"Turma 2","rank":43,"acertos":25,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,1,1,0,1,0,0,1,1,1,1,1,1,0,0,0,1,0,0,0,0,0,0,1,1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,1,0,0,1]},{"num":"1272","nome":"Emilli Pereira Rocha","turma":"Turma 2","rank":43,"acertos":25,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[0,1,1,0,0,0,0,0,1,1,0,1,1,1,1,0,0,0,0,1,0,1,0,1,1,0,0,1,1,0,1,0,0,0,1,0,1,0,0,0,1,1,1,1,0,1,1,1,1,0]},{"num":"1278","nome":"Emerson Santana Duraque","turma":"Turma 2","rank":43,"acertos":25,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,0,1,1,1,1,0,0,1,1,1,1,0,0,0,0,0,1,0,1,0,1,0,1,1,1,0,0,0,1,0,0,0,0,1,0,1,1,1,0,0,1,0,0,0,1]},{"num":"1288","nome":"Jamilly Vitoria Salles Silva","turma":"Turma 3","rank":43,"acertos":25,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,1,1,1,1,1,0,1,0,0,1,1,1,1,1,0,1,1,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0,0]},{"num":"1298","nome":"Vitor Marques Alves","turma":"Turma 4","rank":43,"acertos":25,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,0,0,1,0,1,1,1,0,0,0,1,1,1,1,0,1,0,0,0,1,1,0,0,1,1,0,0,0,1,0,1,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,1,1]},{"num":"1332","nome":"Evellyn Magalhães Souza","turma":"Turma 1","rank":43,"acertos":25,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":5,"tot":5,"pct":1.0},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,0,0,1,1,1,1,1,1,0,0,1,1,1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,1,1,0,0,1,0,1,1,0,1,0,0,1,0,1,1]},{"num":"1334","nome":"Kevillyn Beatriz Souza de Lima Oliveira","turma":"Turma 4","rank":43,"acertos":25,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,0,1,1,1,1,1,1,1,0,1,1,1,0,1,1,0,1,1,1,0,1,0,1,0,1,1,0,0,1,0,0,1,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0]},{"num":"1335","nome":"Yasmin Cocarelli de Assis","turma":"Turma 4","rank":43,"acertos":25,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,1,1,1,1,1,0,1,0,0,1,1,1,1,0,0,1,1,0,0,1,0,0,0,1,1,1,0,1,1,0,0,0,0,0,1,0,0,1,0,1,0,1,0,0,0,1,1,0]},{"num":"1338","nome":"Gabriel Vasconcelos de Mello","turma":"Turma 1","rank":43,"acertos":25,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,0,0,0,1,1,1,1,0,1,0,0,1,0,0,0,0,0,0,0,1,1,1,0,1,1,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,1,0,1]},{"num":"1339","nome":"Helena Teixeira Gomes","turma":"Turma 2","rank":43,"acertos":25,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,1,0,1,1,0,0,0,0,1,1,0,1,1,0,1,0,1,0,0,0,0,1,0,1,1,0,0,1,1,0,0,1,0,0,1,1,1,1,1,1,1,1,0,1,0,0,0,0]},{"num":"1202","nome":"Israel Mendes da Silva Abreu","turma":"Turma 1","rank":53,"acertos":24,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,0,1,0,1,0,0,1,0,1,0,0,0,0,1,1,0,0,0,0,1,0,1,0,1,1,0,0,1,0,1,0,0,0,1,1,1,1,1,0,0,0,1,1,0]},{"num":"1204","nome":"Ana Beatrys de Lima Costa","turma":"Turma 1","rank":53,"acertos":24,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,0,1,0,0,1,0,1,1,1,1,1,1,1,1,0,0,1,0,0,0,0,1,1,0,1,0,1,1,0,1,0,0,0,0,0,1,0,1,1,1,0,1,0,0,0,0,1]},{"num":"1209","nome":"Anna Beatriz dos Santos Pereira","turma":"Turma 1","rank":53,"acertos":24,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,0,0,0,0,1,1,0,1,0,1,1,1,1,1,1,1,0,0,0,1,1,1,0,0,0,0,0,1,0,0,1,1,1,0,1,0,0,1,0,1,1,1,0,0,0,0,0,1]},{"num":"1210","nome":"Anna Júlia Marcelino dos Santos","turma":"Turma 1","rank":53,"acertos":24,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,0,0,1,1,0,1,1,1,0,0,1,1,1,0,1,1,0,1,0,1,0,0,0,1,1,0,0,1,0,0,0,1,0,0,0,0,1,1,0,1,1,1,1,0,0,0,0,1]},{"num":"1277","nome":"Alan Santos Souza","turma":"Turma 3","rank":53,"acertos":24,"disc":{"ATUA":{"ac":5,"tot":5,"pct":1.0},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,1,1,1,1,0,1,0,1,0,0,0,1,1,1,1,0,1,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,0,0,0,0,1,1,1,1,0,0,1,1,1]},{"num":"1309","nome":"Melissa Helena Costa Machado","turma":"Turma 3","rank":53,"acertos":24,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,0,1,0,1,1,0,1,0,0,1,1,1,0,1,0,1,0,1,1,1,0,1,0,1,0,0,0,1,0,1,0,0,0,0,1,0,0,1,0,1,1,1,0,0,0,0,1]},{"num":"1322","nome":"Júlio César de Sousa Silva","turma":"Turma 3","rank":53,"acertos":24,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,1,0,1,1,0,1,1,0,0,0,1,0,1,0,0,1,0,1,0,1,0,0,0,1,1,1,0,0,0,0,0,1,0,1,1,1,0,1,1,0,1,0,1,0,1,0,1,0]},{"num":"1229","nome":"Kennedy de Souza Lopes","turma":"Turma 1","rank":60,"acertos":23,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,0,1,1,0,1,0,1,1,0,1,1,1,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,0,0,1,0,0,0,0,0,1,1,1,0,1,1,1,0,0,0,0]},{"num":"1239","nome":"Aleffe Adriano Gomes da Silva","turma":"Turma 2","rank":60,"acertos":23,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,0,1,1,1,0,0,1,0,1,0,1,1,0,0,1,1,0,1,1,0,1,0,1,0,1,0,1,0,0,0,0,0,0,1,0,0,1,1,1,0,1,0,0,0,0,0,1]},{"num":"1273","nome":"Maria Ester Cano Morales","turma":"Turma 4","rank":60,"acertos":23,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,1,1,0,0,0,0,0,0,0,1,0,1,1,0,1,1,0,1,1,1,0,1,0,0,0,1,0,1,0,0,1,0,0,1,1,1,0,0,1,0,1,1,1,0,0,0,0]},{"num":"1324","nome":"Sarah Alves de Carvalho","turma":"Turma 4","rank":60,"acertos":23,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,1,1,1,1,1,0,0,1,1,1,1,1,0,0,0,0,0,1,1,0,1,0,1,0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,1,1,0,0]},{"num":"1330","nome":"Gustavo Henrique Anselmo do Nascimento","turma":"Turma 4","rank":60,"acertos":23,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,1,0,0,1,0,1,0,0,1,1,1,1,0,1,1,0,0,1,0,0,1,1,1,0,0,1,0,0,0,0,1,0,1,0,0,1,1,1,1,0,0,1,0,0,0,1]},{"num":"1214","nome":"Arthur Albuquerque","turma":"Turma 1","rank":65,"acertos":22,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,0,0,1,0,1,0,1,0,0,1,0,1,1,1,1,0,1,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,1,0,0]},{"num":"1299","nome":"Carlos Eduardo Silva e Silva","turma":"Turma 4","rank":65,"acertos":22,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,0,1,0,1,0,0,1,0,1,1,0,0,0,1,1,0,0,1,0,1,1,0,0,1,0,0,0,1,0,1,0,0,0,1,0,1,0,0,0,0,1,0,1,0]},{"num":"1318","nome":"Ana Jullya Pereira Soares","turma":"Turma 1","rank":65,"acertos":22,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,1,1,0,0,0,1,1,0,1,1,1,1,1,0,0,0,0,1,0,0,1,0,1,1,1,0,0,0,0,1,1,0,0,0,0,0,1,1,1,1,0,0,0,0,1,0,0]},{"num":"1329","nome":"Maria Eduarda Leite Correia dos Santos","turma":"Turma 4","rank":65,"acertos":22,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":8,"tot":11,"pct":0.7273},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":4,"tot":5,"pct":0.8},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,0,0,0,0,0,1,0,0,1,1,1,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0]},{"num":"1221","nome":"Thauany de Carvalho Neri","turma":"Turma 1","rank":69,"acertos":21,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,0,0,1,0,0,1,1,1,0,1,1,1,1,0,0,0,1,0,0,0,0,1,1,1,1,0,0,1,0,0,1,1,0,0,1,0,0,1,1,1,0,0,0,1,0,0,0,0]},{"num":"1246","nome":"Yasmim Camilly Lima Cavalcanti","turma":"Turma 1","rank":69,"acertos":21,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,1,1,1,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,1,1,0,0,0,0,1,1,0,1,1,0,0,0,0,0,1,1]},{"num":"1252","nome":"Maria Luiza Torres Monteiro","turma":"Turma 2","rank":69,"acertos":21,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,0,1,1,0,0,0,0,0,1,0,1,1,1,1,0,1,0,1,0,1,0,1,0,0,1,1,0,1,0,1,0,0,0,0,1,1,1,1,0,1,0,0,0,1,0,0,0,0]},{"num":"1257","nome":"Kamilly de Oliveira Carvalho","turma":"Turma 2","rank":69,"acertos":21,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,1,0,0,0,0,0,0,1,0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,0,0,0,1,1,0,0,1,0,1,0,1,0,1,0,1,1,1,1,0,0,0,0,0]},{"num":"1323","nome":"Bruna Milena Laureano Silva","turma":"Turma 1","rank":69,"acertos":21,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,1,0,1,0,0,0,1,1,0,1,1,0,1,0,1,1,0,1,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,1,1,1,0,0,0,1,1,0,0,0,0,0,1,1]},{"num":"1223","nome":"Ryan Miguel de Araújo Lopes","turma":"Turma 1","rank":74,"acertos":20,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,1,1,0,1,1,1,1,0,1,0,0,1,1,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,1,1,0,1,0]},{"num":"1231","nome":"Thiago Diniz Santos","turma":"Turma 3","rank":74,"acertos":20,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,0,0,1,1,0,0,0,1,0,0,1,1,1,0,1,1,1,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1,1,1,0,1,0,0,1,0,0,1]},{"num":"1234","nome":"Carolina Fernandes Passos","turma":"Turma 1","rank":74,"acertos":20,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,1,1,0,1,1,0,1,1,0,1,0,1,1,1,1,0,0,0,1,0,0,1,1,0,1,1,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0]},{"num":"1314","nome":"Laura Fagundes de Lira","turma":"Turma 4","rank":74,"acertos":20,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,0,1,0,1,1,1,1,1,0,0,0,0,1,1,1,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0]},{"num":"1327","nome":"Wendy Rosiani Cussi Loza","turma":"Turma 4","rank":74,"acertos":20,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,1,1,0,1,1,0,1,1,0,0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,1,0,0,0,1,1,0,0]},{"num":"1331","nome":"Esther Ferreira dos Santos","turma":"Turma 4","rank":74,"acertos":20,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,1,1,1,1,1,1,0,0,0,0,1,0,1,0,1,0,0,1,0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,0,1,0,1,1,1,0,0,0,0,0,0]},{"num":"1218","nome":"Nicolly de Oliveira Peres","turma":"Turma 2","rank":80,"acertos":19,"disc":{"ATUA":{"ac":0,"tot":5,"pct":0.0},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,0,0,0,1,1,0,1,1,0,0,1,1,1,1,0,0,0,1,1,0,0,1,1,1,1,0,0,1,1,0,0,0,0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0]},{"num":"1241","nome":"Maria Eduarda do Nascimento Bonfim","turma":"Turma 2","rank":80,"acertos":19,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,1,1,1,1,0,0,0,1,0,0,1,1,1,1,0,1,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,1,1,1,0,0,0,0,1,0]},{"num":"1244","nome":"Kamilly Cristina Neves de Oliveira","turma":"Turma 2","rank":80,"acertos":19,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":4,"tot":5,"pct":0.8}},"qs":[1,0,0,0,1,0,1,1,0,1,0,0,0,1,1,1,0,1,1,0,0,1,0,0,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,1,1]},{"num":"1255","nome":"Maria Eduarda Oliveira Ribeiro","turma":"Turma 2","rank":80,"acertos":19,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":4,"tot":7,"pct":0.5714},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,1,1,1,1,1,0,0,1,0,0,1,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,0,0,0,1,0,1,0,0,0]},{"num":"1284","nome":"Isis Larissa dos Santos Silva","turma":"Turma 4","rank":80,"acertos":19,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,0,0,1,0,0,1,1,0,0,0,0,1,1,1,0,1,0,0,0,0,0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,1,1,1,1,1,0,1,0,0,1,0]},{"num":"1289","nome":"Kariely Claisa Butrón Gutierrez","turma":"Turma 3","rank":80,"acertos":19,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,0,0,1,1,0,1,1,0,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,1,1,1,0,1,0,0,1,1,0,1,0,0,0,1,0,0,0,1,1,0,1,1,0,0]},{"num":"1313","nome":"Matheus de Souza Basilio Lopes","turma":"Turma 4","rank":80,"acertos":19,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,1,1,1,0,1,1,0,0,1,1,1,0,1,0,0,1,1,0,0,1,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,1,0,0,0,0,0,1,0,0,0,1]},{"num":"1317","nome":"Luz Noelia Mamani Lapaca","turma":"Turma 4","rank":80,"acertos":19,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,0,0,0,1,1,0,1,0,0,0,1,1,1,0,0,0,0,1,0,1,0,0,0,1,1,0,0,0,1,0,1,1,0,0,0,1,1,1,0,1,0,0,0,0,1,0,0,0]},{"num":"1206","nome":"Henrique Costa Meira","turma":"Turma 1","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,1,1,1,1,1,0,1,0,0,0,1,1,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,1,0,0,1,0,1,1,0,1,0,0,0,0,0,0,0,1]},{"num":"1220","nome":"Lavinia Souza Guimarães","turma":"Turma 1","rank":88,"acertos":18,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,0,1,1,0,0,0,0,1,0,1,1,1,0,0,1,1,0,1,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,1]},{"num":"1222","nome":"Milena Oliveira dos Santos","turma":"Turma 1","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":2,"tot":2,"pct":1.0},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,1,0,1,0,1,1,0,1,0,1,1,1,0,0,1,1,0,0,1,0,1,1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,0,0]},{"num":"1235","nome":"Ellyson Gutierrez Condori","turma":"Turma 2","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[1,1,1,0,0,0,0,0,0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,1,1,0,1,0,0,1,0,1,1]},{"num":"1251","nome":"Kaique Barbosa Ferreira da Silva","turma":"Turma 2","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":2,"tot":11,"pct":0.1818},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":4,"tot":5,"pct":0.8},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,1,0,1,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0,0,0,1,1,0,0,1,1,0,0,1,1,0,1,0,0,0,1,1,0,1,1,0,0,0,0,0]},{"num":"1264","nome":"Arthur Alves dos Santos","turma":"Turma 4","rank":88,"acertos":18,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,1,1,0,0,1,0,1,0,0,1,1,0,1,0,0,0,0,1,0,0,0,0,0,0,1,1,0,1,0,1,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,0,1]},{"num":"1297","nome":"Isaac Mendonça Santos Neres","turma":"Turma 3","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,0,0,1,1,0,0,1,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1]},{"num":"1315","nome":"Monike Gabrielly da Silva Bezerra","turma":"Turma 3","rank":88,"acertos":18,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,1,1,0,1,0,1,1,0,0,0,1,1,1,1,1,1,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,1,1,0,0,0]},{"num":"1316","nome":"Maria Clara Dias Portes","turma":"Turma 4","rank":88,"acertos":18,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":4,"tot":5,"pct":0.8},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":3,"tot":5,"pct":0.6}},"qs":[0,0,1,1,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,1,0,1,0,1,1,1,0,0,0,0,1,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0,1,0,1,1]},{"num":"1208","nome":"Júlia Vitória dos Santos Silva","turma":"Turma 1","rank":97,"acertos":17,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,0,1,1,1,0,0,0,1,0,0,1,1,1,0,0,1,0,0,0,0,0,1,1,1,0,0,0,1,0,0,0,0,0,0,1,0,1,0,1,1,1,0,0,0,0,0,0,0]},{"num":"1213","nome":"Júlio Nobre Ribeiro","turma":"Turma 4","rank":97,"acertos":17,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,0,1,0,0,1,0,0,1,0,1,0,1,0,0,0,0,1,0,0,0,1,0,1,1,1,0,0,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0]},{"num":"1215","nome":"Emilly Oliveira Santos","turma":"Turma 1","rank":97,"acertos":17,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,0,1,1,0,1,1,0,0,0,0,1,1,0,1,0,0,0,0,0,1,0,1,1,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,1,0,0,0,0,1]},{"num":"1254","nome":"Heloisa Videira Machado","turma":"Turma 3","rank":97,"acertos":17,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":3,"tot":5,"pct":0.6},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,1,0,1,0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,1,0,0,1,0,1,1,0,1,0,0,0,0,0]},{"num":"1260","nome":"Maria Luiza Cesar Sabino","turma":"Turma 2","rank":97,"acertos":17,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,1,0,1,0,0,0,0,1,0,0,1,0,1,0,1,1,0,0,0,1,0,0,0,1,0,1,0,1,0,0,0,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0,1,0]},{"num":"1265","nome":"Emilly Angeli da Silva","turma":"Turma 2","rank":97,"acertos":17,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":2,"tot":11,"pct":0.1818},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":6,"tot":7,"pct":0.8571},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,1,1,0,0,0,1,1,1,1,0,1,1,1,0,0,1,1,0,0,0,0,0,1,0,0]},{"num":"1311","nome":"João Victor de Souza Santos","turma":"Turma 4","rank":97,"acertos":17,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,1,1,0,0,1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,1,0,0,0,1,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0]},{"num":"1326","nome":"Gustavo Carvalho de Araujo","turma":"Turma 4","rank":97,"acertos":17,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,1,0,0,1,1,0,1,0,0,0,1,1,1,1,0,0,0,1,0,1,1,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,1,0,0,0,0,0,0,0,0,1]},{"num":"1275","nome":"Yasmin Kauany Nunes dos Santos","turma":"Turma 2","rank":105,"acertos":16,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[1,0,0,0,0,1,1,1,0,1,1,0,1,1,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,1]},{"num":"1292","nome":"Vitoria Moraes Malosti","turma":"Turma 3","rank":105,"acertos":16,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":3,"tot":5,"pct":0.6},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,0,0,1,1,1,0,0,0,0,1,1,0,1,0,0,0,0,0,1,1,0,0,0,0,0,1,1,0,0,1,0,0,1,0,1,0,0,0,0,0,0,0,1,1,0,0]},{"num":"1225","nome":"Yasmin Andrade dos Santos","turma":"Turma 4","rank":107,"acertos":15,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,1,0,0,0,0,0,1,1,0,0,0,0,1,1,0,0,1,1,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,1,0,0,0,1,0,0]},{"num":"1243","nome":"Sabena Ifeoma da Silva Ibe","turma":"Turma 2","rank":107,"acertos":15,"disc":{"ATUA":{"ac":4,"tot":5,"pct":0.8},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":3,"tot":5,"pct":0.6},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,1,1,1,0,0,0,0,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]},{"num":"1270","nome":"Camila de Andrade Dutra Apolinario","turma":"Turma 2","rank":107,"acertos":15,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":7,"tot":11,"pct":0.6364},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,1,0,1,0,1,0,0,0,1,1,1,1,0,0,1,1,1,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]},{"num":"1281","nome":"Julia Vitoria Bueno da Silva Ferreira","turma":"Turma 3","rank":107,"acertos":15,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,1,0,0,1,1,0,0,1,0,0,0,0,0,1,0,0,1,0,1,0,0,1,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,1]},{"num":"1283","nome":"Jose Vaelison de Oliveira Pereira","turma":"Turma 3","rank":107,"acertos":15,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,0,0,1,1,1,0,1,0,0,1,0,1,0,0,0,0,0,1,0,0,1,1,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,1,0]},{"num":"1276","nome":"Rayssa Soares da Costa","turma":"Turma 3","rank":112,"acertos":14,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,0,0,1,0,0,0,1,0,1,0,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,1,0,0,0,0,1,0,1,0,0,0,0,1,1]},{"num":"1287","nome":"Isabella Aidê Ribeiro de Barros","turma":"Turma 3","rank":112,"acertos":14,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":2,"tot":5,"pct":0.4},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[1,0,0,0,0,0,0,1,0,0,1,0,1,1,1,1,0,0,0,0,0,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1,0,0,0,0]},{"num":"1300","nome":"Rayza Lima de Carvalho","turma":"Turma 3","rank":112,"acertos":14,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":6,"tot":11,"pct":0.5455},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,0,1,0,1,0,0,1,0,0,1,1,1,0,1,0,0,1,0,0,0,0,1,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0]},{"num":"1341","nome":"Thamires Rodrigues de Oliveira","turma":"Turma 3","rank":112,"acertos":14,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":4,"tot":5,"pct":0.8},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,0,0,1,1,1,1,1,0,0,0,1,0,0,1,0,1,0,0,0,1,0,0,1,1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0]},{"num":"1268","nome":"Maria Eduarda Alves da Silva Putumuju","turma":"Turma 2","rank":116,"acertos":13,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":1,"tot":5,"pct":0.2}},"qs":[0,0,1,0,0,0,0,0,0,1,0,0,1,1,1,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,1,1,0,0,0,1,0,0,0]},{"num":"1216","nome":"Mariana Correia de Souza","turma":"Turma 1","rank":117,"acertos":12,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,1,0,0,0,0,0,0,0,1,0,0,1,0,1,1,1,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0]},{"num":"1238","nome":"Keyson Neri de Carvalho","turma":"Turma 1","rank":117,"acertos":12,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":5,"tot":11,"pct":0.4545},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":3,"tot":7,"pct":0.4286},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,1,0,1,0,0,0,0,1,1,0,0,0,1,0,0,1,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0]},{"num":"1337","nome":"Mayra Christine Mondego Martins","turma":"Turma 4","rank":117,"acertos":12,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":2,"tot":5,"pct":0.4},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":1,"tot":7,"pct":0.1429},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":0,"tot":5,"pct":0.0},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,1,1,0,0,0,0,0,1,0,1,1,0,0,0,0,0,1,1,0,0,0,1,1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0]},{"num":"1269","nome":"Vitória Morais de Oliveira","turma":"Turma 1","rank":120,"acertos":11,"disc":{"ATUA":{"ac":3,"tot":5,"pct":0.6},"BIO":{"ac":1,"tot":5,"pct":0.2},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,0,1,0,1,1,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,1,0,0,0,0,0,0,0,0]},{"num":"1305","nome":"Samara Borges de Lima","turma":"Turma 1","rank":120,"acertos":11,"disc":{"ATUA":{"ac":1,"tot":5,"pct":0.2},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":1,"tot":11,"pct":0.0909},"HIST":{"ac":3,"tot":5,"pct":0.6},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":1,"tot":2,"pct":0.5},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,1,0,0,0,0,1,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,0,1,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,1,0,0,0,0,0,0,0,0]},{"num":"1245","nome":"Ana Alice da Silva Reis","turma":"Turma 2","rank":122,"acertos":10,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":2,"tot":5,"pct":0.4},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[1,0,0,0,1,1,0,0,0,1,0,0,1,0,1,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0]},{"num":"548","nome":"Marcos Antonio de Araujo Ribeiro","turma":"Turma 4","rank":123,"acertos":9,"disc":{"ATUA":{"ac":2,"tot":5,"pct":0.4},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":3,"tot":11,"pct":0.2727},"HIST":{"ac":0,"tot":5,"pct":0.0},"GEOG":{"ac":1,"tot":5,"pct":0.2},"MAT":{"ac":0,"tot":7,"pct":0.0},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":1,"tot":5,"pct":0.2},"FIS":{"ac":2,"tot":5,"pct":0.4}},"qs":[0,0,1,0,1,0,0,0,0,0,0,0,0,0,0,0,1,1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,0,1]},{"num":"1308","nome":"Lucas de Jesus Paulo Sousa","turma":"Turma 4","rank":123,"acertos":9,"disc":{"ATUA":{"ac":0,"tot":5,"pct":0.0},"BIO":{"ac":0,"tot":5,"pct":0.0},"INTERP":{"ac":4,"tot":11,"pct":0.3636},"HIST":{"ac":1,"tot":5,"pct":0.2},"GEOG":{"ac":0,"tot":5,"pct":0.0},"MAT":{"ac":2,"tot":7,"pct":0.2857},"GRAM":{"ac":0,"tot":2,"pct":0.0},"QUI":{"ac":2,"tot":5,"pct":0.4},"FIS":{"ac":0,"tot":5,"pct":0.0}},"qs":[0,0,0,0,0,0,0,0,0,0,0,0,1,1,0,0,1,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0,0,0,1,1,0,0,0,0,0,0,0]}],"turmas":["Turma 1","Turma 2","Turma 3","Turma 4"],"disc_names":["ATUA","BIO","INTERP","HIST","GEOG","MAT","GRAM","QUI","FIS"],"disc_labels":{"ATUA":"Atualidades","BIO":"Biologia","INTERP":"Interpretação","HIST":"História","GEOG":"Geografia","MAT":"Matemática","GRAM":"Gramática","QUI":"Química","FIS":"Física"},"disc_totals":{"ATUA":5,"BIO":5,"INTERP":11,"HIST":5,"GEOG":5,"MAT":7,"GRAM":2,"QUI":5,"FIS":5},"disc_questions":{"ATUA":[1,2,3,4,5],"BIO":[6,7,8,9,10],"INTERP":[11,12,13,14,15,16,17,18,19,20,21],"HIST":[22,23,24,25,26],"GEOG":[27,28,29,30,31],"MAT":[32,33,34,35,36,37,38],"GRAM":[39,40],"QUI":[41,42,43,44,45],"FIS":[46,47,48,49,50]},"q_acertos_global":{"1":49.2,"2":52.3,"3":77.3,"4":32.8,"5":73.4,"6":53.1,"7":44.5,"8":60.9,"9":40.6,"10":48.4,"11":32.8,"12":41.4,"13":80.5,"14":75.0,"15":90.6,"16":40.6,"17":38.3,"18":53.9,"19":31.2,"20":42.2,"21":16.4,"22":60.9,"23":26.6,"24":38.3,"25":27.3,"26":75.0,"27":53.1,"28":39.8,"29":10.2,"30":60.2,"31":39.8,"32":14.1,"33":33.6,"34":50.8,"35":19.5,"36":28.9,"37":47.7,"38":25.0,"39":34.4,"40":59.4,"41":44.5,"42":78.1,"43":49.2,"44":48.4,"45":29.7,"46":23.4,"47":37.5,"48":21.1,"49":30.5,"50":44.5},"q_acertos_turma":{"Turma 1":{"1":35.3,"2":61.8,"3":73.5,"4":35.3,"5":82.4,"6":64.7,"7":32.4,"8":67.6,"9":35.3,"10":82.4,"11":23.5,"12":47.1,"13":88.2,"14":73.5,"15":88.2,"16":32.4,"17":44.1,"18":52.9,"19":26.5,"20":35.3,"21":14.7,"22":55.9,"23":32.4,"24":38.2,"25":29.4,"26":79.4,"27":55.9,"28":32.4,"29":2.9,"30":58.8,"31":29.4,"32":14.7,"33":23.5,"34":58.8,"35":11.8,"36":38.2,"37":41.2,"38":17.6,"39":41.2,"40":64.7,"41":47.1,"42":85.3,"43":47.1,"44":47.1,"45":26.5,"46":14.7,"47":20.6,"48":17.6,"49":32.4,"50":52.9},"Turma 2":{"1":56.7,"2":50.0,"3":80.0,"4":36.7,"5":63.3,"6":43.3,"7":36.7,"8":36.7,"9":26.7,"10":66.7,"11":36.7,"12":30.0,"13":70.0,"14":83.3,"15":93.3,"16":46.7,"17":33.3,"18":50.0,"19":33.3,"20":33.3,"21":13.3,"22":60.0,"23":16.7,"24":36.7,"25":23.3,"26":76.7,"27":53.3,"28":40.0,"29":26.7,"30":70.0,"31":50.0,"32":16.7,"33":20.0,"34":43.3,"35":30.0,"36":13.3,"37":53.3,"38":26.7,"39":33.3,"40":46.7,"41":56.7,"42":80.0,"43":53.3,"44":40.0,"45":30.0,"46":23.3,"47":46.7,"48":16.7,"49":30.0,"50":33.3},"Turma 3":{"1":53.3,"2":56.7,"3":76.7,"4":23.3,"5":70.0,"6":56.7,"7":63.3,"8":76.7,"9":50.0,"10":20.0,"11":46.7,"12":40.0,"13":83.3,"14":73.3,"15":90.0,"16":46.7,"17":40.0,"18":53.3,"19":40.0,"20":46.7,"21":20.0,"22":60.0,"23":30.0,"24":40.0,"25":30.0,"26":66.7,"27":40.0,"28":43.3,"29":3.3,"30":56.7,"31":40.0,"32":10.0,"33":53.3,"34":53.3,"35":16.7,"36":33.3,"37":53.3,"38":23.3,"39":30.0,"40":56.7,"41":46.7,"42":66.7,"43":46.7,"44":66.7,"45":40.0,"46":30.0,"47":50.0,"48":26.7,"49":33.3,"50":50.0},"Turma 4":{"1":52.9,"2":41.2,"3":79.4,"4":35.3,"5":76.5,"6":47.1,"7":47.1,"8":61.8,"9":50.0,"10":23.5,"11":26.5,"12":47.1,"13":79.4,"14":70.6,"15":91.2,"16":38.2,"17":35.3,"18":58.8,"19":26.5,"20":52.9,"21":17.6,"22":67.6,"23":26.5,"24":38.2,"25":26.5,"26":76.5,"27":61.8,"28":44.1,"29":8.8,"30":55.9,"31":41.2,"32":14.7,"33":38.2,"34":47.1,"35":20.6,"36":29.4,"37":44.1,"38":32.4,"39":32.4,"40":67.6,"41":29.4,"42":79.4,"43":50.0,"44":41.2,"45":23.5,"46":26.5,"47":35.3,"48":23.5,"49":26.5,"50":41.2}},"disc_media_global":{"ATUA":2.85,"BIO":2.48,"INTERP":5.43,"HIST":2.28,"GEOG":2.03,"MAT":2.2,"GRAM":0.94,"QUI":2.5,"FIS":1.57},"disc_media_turma":{"Turma 1":{"ATUA":2.88,"BIO":2.82,"INTERP":5.26,"HIST":2.35,"GEOG":1.79,"MAT":2.06,"GRAM":1.06,"QUI":2.53,"FIS":1.38},"Turma 2":{"ATUA":2.87,"BIO":2.1,"INTERP":5.23,"HIST":2.13,"GEOG":2.4,"MAT":2.03,"GRAM":0.8,"QUI":2.6,"FIS":1.5},"Turma 3":{"ATUA":2.8,"BIO":2.67,"INTERP":5.8,"HIST":2.27,"GEOG":1.83,"MAT":2.43,"GRAM":0.87,"QUI":2.67,"FIS":1.9},"Turma 4":{"ATUA":2.85,"BIO":2.29,"INTERP":5.44,"HIST":2.35,"GEOG":2.12,"MAT":2.26,"GRAM":1.0,"QUI":2.24,"FIS":1.53}},"media_geral":23.0,"total_alunos":124};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let selTurma = 'Todas';
+let selDisc  = 'Todas';
+let distChart, turmaChart, radarChart;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+const discColor = d => ({'ATUA':'#E07B2A','BIO':'#2A9D8F','INTERP':'#8B5CF6','HIST':'#D97706',
+  'GEOG':'#059669','MAT':'#C0272D','GRAM':'#6366F1','QUI':'#0EA5E9','FIS':'#EC4899'}[d]||'#888');
+const discPct = (s,d) => s.disc[d].pct;
+const acColor = a => a>=75?'var(--green)':a>=45?'var(--amber)':'var(--red)';
+const faixaOf = n => n>=35?'Avançado':n>=25?'Adequado':n>=15?'Básico':'Crítico';
+const fTag   = n => {const f=faixaOf(n);return f==='Avançado'?'t-g':f==='Adequado'?'t-g':f==='Básico'?'t-a':'t-r'};
+function filtered(){
+  return D.students.filter(s=>{
+    const t = selTurma==='Todas'||s.turma===selTurma;
+    return t;
+  });
+}
+function barHTML(pct,color,w=52){
+  return `<span class="mbar"><span class="mbar-f" style="width:${pct}%;background:${color}"></span></span>`;
+}
+function qColor(pct){return pct>=60?'var(--green)':pct>=35?'var(--amber)':'var(--red)'}
+function qAccertos(q){
+  const ss=filtered();
+  if(!ss.length)return 0;
+  const qKey=String(q);
+  if(selTurma==='Todas') return D.q_acertos_global[qKey]||0;
+  return D.q_acertos_turma[selTurma]?.[qKey]||0;
+}
+
+// ── Filters ────────────────────────────────────────────────────────────────
+function buildFilters(){
+  const tp=document.getElementById('t-pills');
+  const dp=document.getElementById('d-pills');
+  ['Todas',...D.turmas].forEach(t=>{
+    const b=document.createElement('button');
+    b.className='pill'+(t===selTurma?' on':'');
+    b.textContent=t==='Todas'?'Todas as Turmas':t;
+    b.onclick=()=>{selTurma=t;render()};
+    tp.appendChild(b);
+  });
+  ['Todas',...D.disc_names].forEach(d=>{
+    const b=document.createElement('button');
+    b.className='pill'+(d===selDisc?' on':'');
+    b.textContent=d==='Todas'?'Todas':D.disc_labels[d]||d;
+    b.onclick=()=>{selDisc=d;render()};
+    dp.appendChild(b);
+  });
+}
+function syncPills(){
+  document.querySelectorAll('#t-pills .pill').forEach((b,i)=>{
+    const t=i===0?'Todas':D.turmas[i-1];
+    b.className='pill'+(t===selTurma?' on':'');
+  });
+  document.querySelectorAll('#d-pills .pill').forEach((b,i)=>{
+    const d=i===0?'Todas':D.disc_names[i-1];
+    b.className='pill'+(d===selDisc?' on':'');
+  });
+  const ss=filtered();
+  document.getElementById('stat-badge').textContent=
+    selTurma==='Todas'?`${ss.length} alunos · ${D.turmas.length} turmas`:`${ss.length} alunos · ${selTurma}`
+    +(selDisc!=='Todas'?` · ${D.disc_labels[selDisc]}`:'');
+}
+
+// ── KPIs ───────────────────────────────────────────────────────────────────
+function renderKPIs(){
+  const ss=filtered();
+  if(!ss.length){document.getElementById('kpi-row').innerHTML='';return}
+  const media=ss.reduce((a,s)=>a+s.acertos,0)/ss.length;
+  const melhor=ss.reduce((a,s)=>s.acertos>a.acertos?s:a,ss[0]);
+  const pior=ss.reduce((a,s)=>s.acertos<a.acertos?s:a,ss[0]);
+  
+  // best disc avg
+  let bestDisc='',bestVal=0,worstDisc='',worstVal=100;
+  D.disc_names.forEach(d=>{
+    const avg=ss.reduce((a,s)=>a+s.disc[d].pct,0)/ss.length*100;
+    if(avg>bestVal){bestVal=avg;bestDisc=d}
+    if(avg<worstVal){worstVal=avg;worstDisc=d}
+  });
+  const acima=ss.filter(s=>s.acertos>media).length;
+  
+  const diskDisc = selDisc!=='Todas'?selDisc:null;
+  let kpiExtra = diskDisc
+    ? {lbl:'Média '+D.disc_labels[diskDisc], val: (ss.reduce((a,s)=>a+s.disc[diskDisc].pct,0)/ss.length*100).toFixed(1)+'%', cls:'c-amber', sub:'da disciplina selecionada'}
+    : {lbl:'Acima da Média', val: acima, cls:'c-green', sub:`de ${ss.length} alunos`};
+
+  document.getElementById('kpi-row').innerHTML=`
+    <div class="kpi c-ink"><div class="kpi-lbl">Alunos</div><div class="kpi-val">${ss.length}</div><div class="kpi-sub">${selTurma==='Todas'?D.turmas.length+' turmas':selTurma}</div></div>
+    <div class="kpi c-amber"><div class="kpi-lbl">Média Geral</div><div class="kpi-val c-amber">${media.toFixed(1)}<span style="font-size:14px">/50</span></div><div class="kpi-sub">${(media/50*100).toFixed(1)}% aproveitamento</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Melhor Aluno</div><div class="kpi-val c-green" style="font-size:14px;line-height:1.2">${melhor.nome.split(' ').slice(0,2).join(' ')}</div><div class="kpi-sub">${melhor.acertos}/50 — ${melhor.turma}</div></div>
+    <div class="kpi c-red"><div class="kpi-lbl">Disciplina Crítica</div><div class="kpi-val c-red" style="font-size:18px">${D.disc_labels[worstDisc]}</div><div class="kpi-sub">${worstVal.toFixed(1)}% de acerto médio</div></div>
+    <div class="kpi c-green"><div class="kpi-lbl">Melhor Disciplina</div><div class="kpi-val c-green" style="font-size:18px">${D.disc_labels[bestDisc]}</div><div class="kpi-sub">${bestVal.toFixed(1)}% de acerto médio</div></div>
+    <div class="kpi ${kpiExtra.cls}"><div class="kpi-lbl">${kpiExtra.lbl}</div><div class="kpi-val ${kpiExtra.cls}">${kpiExtra.val}</div><div class="kpi-sub">${kpiExtra.sub}</div></div>
+  `;
+}
+
+// ── Questões ───────────────────────────────────────────────────────────────
+function renderQuestoes(){
+  const el=document.getElementById('q-wrap');
+  const activeQs = selDisc==='Todas'?null:D.disc_questions[selDisc];
+  const qDisc={};
+  D.disc_names.forEach(d=>D.disc_questions[d].forEach(q=>qDisc[q]=d));
+  
+  document.getElementById('q-lbl').textContent=
+    selDisc==='Todas'?'50 questões — todas as disciplinas':`Questões ${D.disc_questions[selDisc][0]}–${D.disc_questions[selDisc].slice(-1)[0]} — ${D.disc_labels[selDisc]}`;
+
+  let html='';
+  for(let q=1;q<=50;q++){
+    const pct=qAccertos(q);
+    const dc=qDisc[q];
+    const active=!activeQs||activeQs.includes(q);
+    const op=active?1:.22;
+    const c=qColor(pct);
+    html+=`<div class="q-cell" style="opacity:${op}" title="Q${q} — ${D.disc_labels[dc]} — ${pct}%">
+      <div class="q-n">Q${q}</div>
+      <div class="q-p" style="color:${c}">${pct}%</div>
+      <div class="q-bar"><div class="q-bf" style="width:${pct}%;background:${c}"></div></div>
+      <div class="q-disc">${dc}</div>
+    </div>`;
+  }
+  el.innerHTML=html;
+}
+
+// ── Distribuição ────────────────────────────────────────────────────────────
+function renderDist(){
+  const ss=filtered();
+  const buckets=Array(11).fill(0);
+  ss.forEach(s=>{
+    const b=Math.min(Math.floor(s.acertos/5),10);
+    buckets[b]++;
+  });
+  const labels=['0-4','5-9','10-14','15-19','20-24','25-29','30-34','35-39','40-44','45-49','50'];
+  const colors=buckets.map((_,i)=>i<=4?'rgba(192,39,45,.75)':i<=7?'rgba(180,74,0,.75)':'rgba(27,94,53,.75)');
+  
+  if(distChart)distChart.destroy();
+  distChart=new Chart(document.getElementById('distChart'),{
+    type:'bar',data:{labels,datasets:[{data:buckets,backgroundColor:colors,borderRadius:4,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y} aluno(s)`}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#7A7A90',font:{size:10}}},y:{grid:{color:'#E2E0E8'},ticks:{color:'#7A7A90',font:{size:10},stepSize:2},beginAtZero:true}}}
+  });
+}
+
+// ── Disc bars ───────────────────────────────────────────────────────────────
+function renderDiscBars(){
+  const ss=filtered();
+  if(!ss.length){document.getElementById('dbars').innerHTML='';return}
+  document.getElementById('disc-filter-label').textContent='';
+  
+  let html='';
+  D.disc_names.forEach(d=>{
+    const avg=ss.reduce((a,s)=>a+s.disc[d].pct,0)/ss.length*100;
+    const c=discColor(d);
+    const active=selDisc==='Todas'||selDisc===d;
+    const op=active?1:.3;
+    html+=`<div class="dbar-row" style="opacity:${op}">
+      <div class="dbar-lbl">${D.disc_labels[d]}</div>
+      <div class="dbar-track"><div class="dbar-fill" style="width:${avg}%;background:${c}"></div></div>
+      <div class="dbar-pct">${avg.toFixed(1)}%</div>
+    </div>`;
+  });
+  document.getElementById('dbars').innerHTML=html;
+}
+
+// ── Turma chart ─────────────────────────────────────────────────────────────
+function renderTurmaChart(){
+  const disc=selDisc==='Todas'?null:selDisc;
+  const vals=D.turmas.map(t=>{
+    const ss=D.students.filter(s=>s.turma===t);
+    if(!ss.length)return 0;
+    if(disc)return (ss.reduce((a,s)=>a+s.disc[disc].pct,0)/ss.length*100).toFixed(1);
+    return (ss.reduce((a,s)=>a+s.acertos,0)/ss.length).toFixed(1);
+  });
+  const label=disc?`Média ${D.disc_labels[disc]} (%)`:  'Média Geral (acertos/50)';
+  const colors=D.turmas.map((_,i)=>['rgba(192,39,45,.8)','rgba(8,102,167,.8)','rgba(27,94,53,.8)','rgba(180,74,0,.8)'][i]);
+  
+  if(turmaChart)turmaChart.destroy();
+  turmaChart=new Chart(document.getElementById('turmaChart'),{
+    type:'bar',data:{labels:D.turmas.map(t=>t.replace('Turma ','')),datasets:[{label,data:vals,backgroundColor:colors,borderRadius:5,borderSkipped:false}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>` ${c.parsed.y}`}}},
+    scales:{x:{grid:{display:false},ticks:{color:'#7A7A90',font:{size:11}}},y:{grid:{color:'#E2E0E8'},ticks:{color:'#7A7A90',font:{size:10}},beginAtZero:true}}}
+  });
+}
+
+// ── Quadrantes ──────────────────────────────────────────────────────────────
+function renderQuadrantes(){
+  const ss=filtered();
+  if(!ss.length){document.getElementById('quad-grid').innerHTML='';return}
+  
+  const medGeral=ss.reduce((a,s)=>a+s.acertos,0)/ss.length;
+  // consistência = desvio padrão das pcts de disciplina (baixo = consistente)
+  ss.forEach(s=>{
+    const pcts=D.disc_names.map(d=>s.disc[d].pct);
+    const avg=pcts.reduce((a,v)=>a+v,0)/pcts.length;
+    const std=Math.sqrt(pcts.reduce((a,v)=>a+(v-avg)**2,0)/pcts.length);
+    s._perf=s.acertos;
+    s._cons=std; // baixo std = alta consistência
+  });
+  const medCons=ss.reduce((a,s)=>a+s._cons,0)/ss.length;
+
+  const quads=[
+    {id:'q1',emoji:'⭐',lbl:'Alta Nota · Alta Consistência',desc:'Referência',bg:'var(--green-lt)',color:'var(--green)',members:[]},
+    {id:'q2',emoji:'🚀',lbl:'Alta Nota · Oscilante',desc:'Potencial',bg:'#EEF2FF',color:'#4F46E5',members:[]},
+    {id:'q3',emoji:'📈',lbl:'Baixa Nota · Consistente',desc:'Reforço de conteúdo',bg:'var(--amber-lt)',color:'var(--amber)',members:[]},
+    {id:'q4',emoji:'⚠',lbl:'Baixa Nota · Oscilante',desc:'Intervenção',bg:'var(--red-lt)',color:'var(--red)',members:[]},
+  ];
+  ss.forEach(s=>{
+    const hiNote=s._perf>=medGeral;
+    const hiCons=s._cons<=medCons;
+    if(hiNote&&hiCons)quads[0].members.push(s);
+    else if(hiNote&&!hiCons)quads[1].members.push(s);
+    else if(!hiNote&&hiCons)quads[2].members.push(s);
+    else quads[3].members.push(s);
+  });
+
+  let html='';
+  quads.forEach(q=>{
+    const tags=q.members.map(s=>`<span class="qtag" style="background:${q.bg};color:${q.color};border:1px solid ${q.color}33" onclick="openModal('${s.num}')">${s.nome.split(' ')[0]} ${s.nome.split(' ').slice(-1)[0]}</span>`).join('');
+    html+=`<div class="quad" style="background:${q.bg}">
+      <div class="quad-ttl" style="color:${q.color}">${q.emoji} ${q.lbl} <span style="font-weight:400;opacity:.7">(${q.members.length})</span></div>
+      <div class="quad-names">${tags||'<span style="font-size:11px;color:var(--ink3)">Nenhum aluno</span>'}</div>
+    </div>`;
+  });
+  document.getElementById('quad-grid').innerHTML=html;
+}
+
+// ── Stars ───────────────────────────────────────────────────────────────────
+function renderStars(){
+  const ss=filtered();
+  const disc=selDisc==='Todas'?null:selDisc;
+  const discs=disc?[disc]:D.disc_names;
+  
+  let html='';
+  discs.forEach(d=>{
+    const gabaritou=ss.filter(s=>s.disc[d].ac===s.disc[d].tot);
+    if(!gabaritou.length)return;
+    const names=gabaritou.map(s=>`🏆 ${s.nome.split(' ').slice(0,2).join(' ')}`).join('<br>');
+    html+=`<div class="star-row">
+      <div class="star-disc">${D.disc_labels[d]}</div>
+      <div class="star-names">${names}</div>
+    </div>`;
+  });
+  document.getElementById('star-list').innerHTML=html||'<div style="color:var(--ink3);font-size:13px;padding:8px">Nenhum aluno gabaritou a disciplina selecionada nesta turma.</div>';
+}
+
+// ── Heatmap ─────────────────────────────────────────────────────────────────
+function renderHeatmap(){
+  const ss=filtered().slice(0,40); // top 40 para performance
+  if(!ss.length){document.getElementById('hm-wrap').innerHTML='';return}
+  const discs=selDisc==='Todas'?D.disc_names:[selDisc];
+  
+  let th=`<tr><th class="hm-name">Aluno</th><th>Turma</th><th>Total</th>`;
+  discs.forEach(d=>{th+=`<th>${D.disc_labels[d].slice(0,5)}</th>`});
+  th+=`</tr>`;
+  
+  let rows='';
+  ss.forEach(s=>{
+    const tot=Math.round(s.acertos/50*100);
+    const tc=acColor(tot);
+    rows+=`<tr onclick="openModal('${s.num}')" style="cursor:pointer">
+      <td class="hm-name" title="${s.nome}">${s.nome}</td>
+      <td style="text-align:center;font-size:11px;color:var(--ink3)">${s.turma.replace('Turma','T')}</td>
+      <td style="text-align:center"><span class="hm-cell" style="background:${tc}22;color:${tc};padding:2px 8px;border-radius:5px">${tot}%</span></td>`;
+    discs.forEach(d=>{
+      const p=Math.round(s.disc[d].pct*100);
+      const c=acColor(p);
+      rows+=`<td><span class="hm-cell" style="background:${c}22;color:${c}">${p}%</span></td>`;
+    });
+    rows+=`</tr>`;
+  });
+  
+  document.getElementById('hm-wrap').innerHTML=`<table class="hm-table"><thead>${th}</thead><tbody>${rows}</tbody></table>`;
+}
+
+// ── Insights ────────────────────────────────────────────────────────────────
+function renderInsights(){
+  const ss=filtered();
+  if(!ss.length){document.getElementById('insights').innerHTML='';return}
+  const disc=selDisc==='Todas'?null:selDisc;
+  
+  const insights=[];
+  
+  // Pior questão
+  let piorQ=1,piorPct=100;
+  const questoes=disc?D.disc_questions[disc]:Object.keys(D.q_acertos_global).map(Number);
+  questoes.forEach(q=>{
+    const p=qAccertos(q);
+    if(p<piorPct){piorPct=p;piorQ=q}
+  });
+  insights.push({type:'red',title:'Questão mais difícil',text:`Q${piorQ} teve apenas ${piorPct}% de acerto${disc?' em '+D.disc_labels[disc]:''}. Requer revisão prioritária.`});
+  
+  // Disciplina crítica
+  const discAvgs={};
+  D.disc_names.forEach(d=>{discAvgs[d]=ss.reduce((a,s)=>a+s.disc[d].pct,0)/ss.length*100});
+  const critDisc=Object.entries(discAvgs).sort((a,b)=>a[1]-b[1])[0];
+  insights.push({type:'red',title:`${D.disc_labels[critDisc[0]]} — alerta`,text:`Média de ${critDisc[1].toFixed(1)}% na turma${selTurma!=='Todas'?' '+selTurma:''}. ${ss.filter(s=>s.disc[critDisc[0]].pct<0.4).length} alunos abaixo de 40%.`});
+  
+  // Alunos críticos
+  const criticos=ss.filter(s=>s.acertos<15).length;
+  if(criticos>0)insights.push({type:'red',title:'Intervenção urgente',text:`${criticos} aluno(s) com menos de 15 acertos (< 30%). Acompanhamento individualizado necessário.`});
+  
+  // Melhor disciplina
+  const bestDisc=Object.entries(discAvgs).sort((a,b)=>b[1]-a[1])[0];
+  insights.push({type:'green',title:`${D.disc_labels[bestDisc[0]]} — destaque`,text:`Melhor desempenho da turma com ${bestDisc[1].toFixed(1)}% de aproveitamento médio.`});
+  
+  // Gabaritados
+  const gabaritouAlgs=ss.filter(s=>D.disc_names.some(d=>s.disc[d].ac===s.disc[d].tot));
+  if(gabaritouAlgs.length>0)insights.push({type:'green',title:'Gabaritaram disciplinas',text:`${gabaritouAlgs.length} aluno(s) gabaritaram ao menos uma disciplina. Use como tutores de pares.`});
+  
+  // Q mais fácil
+  let facilQ=1,facilPct=0;
+  questoes.forEach(q=>{const p=qAccertos(q);if(p>facilPct){facilPct=p;facilQ=q}});
+  insights.push({type:'amber',title:'Questão mais fácil',text:`Q${facilQ} teve ${facilPct}% de acerto. Conteúdo bem dominado pela turma.`});
+  
+  document.getElementById('insights').innerHTML=insights.map(i=>`
+    <div class="insight ${i.type}"><strong>${i.title}</strong>${i.text}</div>
+  `).join('');
+}
+
+// ── Ranking ─────────────────────────────────────────────────────────────────
+function renderRanking(){
+  const ss=filtered().sort((a,b)=>b.acertos-a.acertos);
+  document.getElementById('rank-lbl').textContent=`${ss.length} alunos ordenados por acertos`;
+  
+  const disc=selDisc==='Todas'?null:selDisc;
+  const discs=disc?[disc]:D.disc_names;
+  
+  // Head
+  let thHTML=`<th>#</th><th style="text-align:left">Aluno</th><th>Turma</th><th>Acertos</th><th>Aproveit.</th>`;
+  discs.forEach(d=>{thHTML+=`<th class="disc-val">${D.disc_labels[d].slice(0,4)}</th>`});
+  thHTML+=`<th>Faixa</th>`;
+  document.getElementById('rank-head').innerHTML=thHTML;
+  
+  // Rows
+  let tbody='';
+  ss.forEach((s,i)=>{
+    const pct=Math.round(s.acertos/50*100);
+    const c=acColor(pct);
+    const f=faixaOf(s.acertos);
+    const ft=fTag(s.acertos);
+    const medal=i===0?'🥇 ':i===1?'🥈 ':i===2?'🥉 ':'';
+    const nameClass=s.acertos>=35?'rname hi':'rname';
+    let discCells='';
+    discs.forEach(d=>{
+      const dp=Math.round(s.disc[d].pct*100);
+      const dc=acColor(dp);
+      discCells+=`<td class="disc-val" style="color:${dc};font-weight:500">${s.disc[d].ac}/${s.disc[d].tot}</td>`;
+    });
+    tbody+=`<tr onclick="openModal('${s.num}')" style="cursor:pointer">
+      <td class="rn">${medal}${i+1}</td>
+      <td class="${nameClass}" style="max-width:190px" title="${s.nome}">${s.nome}</td>
+      <td style="color:var(--ink3);font-size:11.5px">${s.turma.replace('Turma ','T')}</td>
+      <td style="font-family:'IBM Plex Mono',monospace;font-weight:600;color:${c};text-align:center">${s.acertos}</td>
+      <td>${barHTML(pct,c)}<span style="font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink3)">${pct}%</span></td>
+      ${discCells}
+      <td><span class="rtag ${ft}">${f}</span></td>
+    </tr>`;
+  });
+  document.getElementById('rank-body').innerHTML=tbody;
+}
+
+// ── Modal perfil ─────────────────────────────────────────────────────────────
+function openModal(num){
+  const s=D.students.find(x=>x.num===num);
+  if(!s)return;
+  document.getElementById('modal-bg').style.display='block';
+  document.getElementById('modal').style.display='block';
+  
+  const allSorted=D.students.slice().sort((a,b)=>b.acertos-a.acertos);
+  const rankGeral=allSorted.findIndex(x=>x.num===num)+1;
+  const turmaSorted=D.students.filter(x=>x.turma===s.turma).sort((a,b)=>b.acertos-a.acertos);
+  const rankTurma=turmaSorted.findIndex(x=>x.num===num)+1;
+  
+  document.getElementById('m-name').textContent=s.nome;
+  document.getElementById('m-sub').textContent=`${s.turma} · Matrícula ${s.num}`;
+  
+  const pct=Math.round(s.acertos/50*100);
+  document.getElementById('m-kpis').innerHTML=`
+    <div class="mk"><div class="mk-l">Acertos</div><div class="mk-v">${s.acertos}/50</div></div>
+    <div class="mk"><div class="mk-l">Aproveit.</div><div class="mk-v">${pct}%</div></div>
+    <div class="mk"><div class="mk-l">Rank Geral</div><div class="mk-v">${rankGeral}º</div></div>
+    <div class="mk"><div class="mk-l">Rank Turma</div><div class="mk-v">${rankTurma}º</div></div>
+  `;
+  
+  if(radarChart)radarChart.destroy();
+  radarChart=new Chart(document.getElementById('radarChart'),{
+    type:'radar',
+    data:{
+      labels:D.disc_names.map(d=>D.disc_labels[d]),
+      datasets:[
+        {label:s.nome.split(' ')[0],data:D.disc_names.map(d=>Math.round(s.disc[d].pct*100)),
+         fill:true,backgroundColor:'rgba(192,39,45,.15)',borderColor:'#C0272D',pointBackgroundColor:'#C0272D',borderWidth:2},
+        {label:'Média Turma',data:D.disc_names.map(d=>{
+          const ts=D.students.filter(x=>x.turma===s.turma);
+          return Math.round(ts.reduce((a,x)=>a+x.disc[d].pct,0)/ts.length*100);
+        }),fill:true,backgroundColor:'rgba(27,94,53,.08)',borderColor:'#1B5E35',pointBackgroundColor:'#1B5E35',borderWidth:1.5,borderDash:[4,3]}
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,scales:{r:{min:0,max:100,ticks:{stepSize:25,color:'#AEAEC0',font:{size:9}},grid:{color:'#E2E0E8'},pointLabels:{color:'#3A3A4A',font:{size:11}}}},plugins:{legend:{labels:{font:{size:11},color:'#3A3A4A'}}}}
+  });
+  
+  let discHTML='';
+  D.disc_names.forEach(d=>{
+    const p=Math.round(s.disc[d].pct*100);
+    const c=discColor(d);
+    discHTML+=`<div class="dd-row">
+      <div class="dd-lbl">${D.disc_labels[d]}</div>
+      <div class="dd-track"><div class="dd-fill" style="width:${p}%;background:${c}"></div></div>
+      <div class="dd-val">${s.disc[d].ac}/${s.disc[d].tot} (${p}%)</div>
+    </div>`;
+  });
+  document.getElementById('m-disc').innerHTML=discHTML;
+}
+function closeModal(){
+  document.getElementById('modal-bg').style.display='none';
+  document.getElementById('modal').style.display='none';
+}
+
+// ── Master render ────────────────────────────────────────────────────────────
+function render(){
+  syncPills();
+  renderKPIs();
+  renderQuestoes();
+  renderDist();
+  renderDiscBars();
+  renderTurmaChart();
+  renderQuadrantes();
+  renderStars();
+  renderHeatmap();
+  renderInsights();
+  renderRanking();
+}
+
+// ── Init ─────────────────────────────────────────────────────────────────────
+buildFilters();
+render();
+</script>
+</body>
+</html>
