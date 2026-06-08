@@ -317,32 +317,124 @@ function syncPills(){
 // ── KPIs ───────────────────────────────────────────────────────────────────
 function renderKPIs(){
   const ss=filtered();
-  if(!ss.length){document.getElementById('kpi-row').innerHTML='';return}
+  if(!ss.length){
+    document.getElementById('kpi-row').innerHTML='';
+    return;
+  }
+
   const media=ss.reduce((a,s)=>a+s.acertos,0)/ss.length;
-  const melhor=ss.reduce((a,s)=>s.acertos>a.acertos?s:a,ss[0]);
+
+  // CORREÇÃO: suporta empates
+  const maiorAcerto = Math.max(...ss.map(s => s.acertos));
+  const melhores = ss.filter(s => s.acertos === maiorAcerto);
+
   const pior=ss.reduce((a,s)=>s.acertos<a.acertos?s:a,ss[0]);
-  
+
   // best disc avg
   let bestDisc='',bestVal=0,worstDisc='',worstVal=100;
+
   D.disc_names.forEach(d=>{
     const avg=ss.reduce((a,s)=>a+s.disc[d].pct,0)/ss.length*100;
-    if(avg>bestVal){bestVal=avg;bestDisc=d}
-    if(avg<worstVal){worstVal=avg;worstDisc=d}
+
+    if(avg>bestVal){
+      bestVal=avg;
+      bestDisc=d;
+    }
+
+    if(avg<worstVal){
+      worstVal=avg;
+      worstDisc=d;
+    }
   });
+
   const acima=ss.filter(s=>s.acertos>media).length;
-  
+
   const diskDisc = selDisc!=='Todas'?selDisc:null;
+
   let kpiExtra = diskDisc
-    ? {lbl:'Média '+D.disc_labels[diskDisc], val: (ss.reduce((a,s)=>a+s.disc[diskDisc].pct,0)/ss.length*100).toFixed(1)+'%', cls:'c-amber', sub:'da disciplina selecionada'}
-    : {lbl:'Acima da Média', val: acima, cls:'c-green', sub:`de ${ss.length} alunos`};
+    ? {
+        lbl:'Média '+D.disc_labels[diskDisc],
+        val:(ss.reduce((a,s)=>a+s.disc[diskDisc].pct,0)/ss.length*100).toFixed(1)+'%',
+        cls:'c-amber',
+        sub:'da disciplina selecionada'
+      }
+    : {
+        lbl:'Acima da Média',
+        val:acima,
+        cls:'c-green',
+        sub:`de ${ss.length} alunos`
+      };
 
   document.getElementById('kpi-row').innerHTML=`
-    <div class="kpi c-ink"><div class="kpi-lbl">Alunos</div><div class="kpi-val">${ss.length}</div><div class="kpi-sub">${selTurma==='Todas'?D.turmas.length+' turmas':selTurma}</div></div>
-    <div class="kpi c-amber"><div class="kpi-lbl">Média Geral</div><div class="kpi-val c-amber">${media.toFixed(1)}<span style="font-size:14px">/50</span></div><div class="kpi-sub">${(media/50*100).toFixed(1)}% aproveitamento</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Melhor Aluno</div><div class="kpi-val c-green" style="font-size:14px;line-height:1.2">${melhor.nome.split(' ').slice(0,2).join(' ')}</div><div class="kpi-sub">${melhor.acertos}/50 — ${melhor.turma}</div></div>
-    <div class="kpi c-red"><div class="kpi-lbl">Disciplina Crítica</div><div class="kpi-val c-red" style="font-size:18px">${D.disc_labels[worstDisc]}</div><div class="kpi-sub">${worstVal.toFixed(1)}% de acerto médio</div></div>
-    <div class="kpi c-green"><div class="kpi-lbl">Melhor Disciplina</div><div class="kpi-val c-green" style="font-size:18px">${D.disc_labels[bestDisc]}</div><div class="kpi-sub">${bestVal.toFixed(1)}% de acerto médio</div></div>
-    <div class="kpi ${kpiExtra.cls}"><div class="kpi-lbl">${kpiExtra.lbl}</div><div class="kpi-val ${kpiExtra.cls}">${kpiExtra.val}</div><div class="kpi-sub">${kpiExtra.sub}</div></div>
+    <div class="kpi c-ink">
+      <div class="kpi-lbl">Alunos</div>
+      <div class="kpi-val">${ss.length}</div>
+      <div class="kpi-sub">
+        ${selTurma==='Todas'?D.turmas.length+' turmas':selTurma}
+      </div>
+    </div>
+
+    <div class="kpi c-amber">
+      <div class="kpi-lbl">Média Geral</div>
+      <div class="kpi-val c-amber">
+        ${media.toFixed(1)}
+        <span style="font-size:14px">/50</span>
+      </div>
+      <div class="kpi-sub">
+        ${(media/50*100).toFixed(1)}% aproveitamento
+      </div>
+    </div>
+
+    <div class="kpi c-green">
+      <div class="kpi-lbl">
+        ${melhores.length > 1 ? 'Melhores Alunos' : 'Melhor Aluno'}
+      </div>
+
+      <div class="kpi-val c-green" style="font-size:14px;line-height:1.3">
+        ${melhores
+          .map(a => '🏆 ' + a.nome.split(' ').slice(0,2).join(' '))
+          .join('<br>')}
+      </div>
+
+      <div class="kpi-sub">
+        ${maiorAcerto}/50
+        ${
+          melhores.length > 1
+            ? ` • ${melhores.length} empatados`
+            : ` — ${melhores[0].turma}`
+        }
+      </div>
+    </div>
+
+    <div class="kpi c-red">
+      <div class="kpi-lbl">Disciplina Crítica</div>
+      <div class="kpi-val c-red" style="font-size:18px">
+        ${D.disc_labels[worstDisc]}
+      </div>
+      <div class="kpi-sub">
+        ${worstVal.toFixed(1)}% de acerto médio
+      </div>
+    </div>
+
+    <div class="kpi c-green">
+      <div class="kpi-lbl">Melhor Disciplina</div>
+      <div class="kpi-val c-green" style="font-size:18px">
+        ${D.disc_labels[bestDisc]}
+      </div>
+      <div class="kpi-sub">
+        ${bestVal.toFixed(1)}% de acerto médio
+      </div>
+    </div>
+
+    <div class="kpi ${kpiExtra.cls}">
+      <div class="kpi-lbl">${kpiExtra.lbl}</div>
+      <div class="kpi-val ${kpiExtra.cls}">
+        ${kpiExtra.val}
+      </div>
+      <div class="kpi-sub">
+        ${kpiExtra.sub}
+      </div>
+    </div>
   `;
 }
 
